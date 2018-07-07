@@ -53,7 +53,9 @@ def readMem(addr):
         clk()
     return data
 
-def write_mem(addr, data): ## TODO
+def write_mem(addr, data):
+    ## TODO
+    pass
 
 def fetch():
     regs['ar'].assign(regs['pc'].val)
@@ -149,4 +151,3 @@ def IINC(varnum, const):
     regs['acc'].assign(const)
     ALU.add(const, a)
     write_mem(regs['ar'].val, a + const)
-    
