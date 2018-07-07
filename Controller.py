@@ -72,9 +72,8 @@ def NOP():
     clk()
 
 def IFEQ(offset):
-    regs["sp"].dec()
-    clk()
-    a = readMem(regs["sp"].val)
+    a = pop()
+    regs['acc'].assign(a)
     ALU.ent_a(a, b = 0)
     if a == 0:
         regs['pc'].assign(regs['pc'].val + offset)
@@ -82,9 +81,8 @@ def IFEQ(offset):
         regs['pc'].inc()
 
 def IFLT(offset):
-    regs['sp'].dec()
-    clk()
-    a = readMem(regs['sp'].val)
+    a = pop()
+    regs['acc'].assign(a)
     ALU.ent_a(a, b = 0)
     if a < 0:
         regs['pc'].assign(regs['pc'].val + offset)
@@ -92,12 +90,10 @@ def IFLT(offset):
         regs['pc'].inc()
 
 def IF_ICMPEQ(offset):
-    regs["sp"].dec()
-    clk()
-    a = readMem(regs["sp"].val)
-    regs['sp'].dec()
-    clk()
-    b = readMem(regs['sp'].val)
+    a = pop()
+    regs['acc'].assign(a)
+    b = pop()
+    regs['dr'].assign(b)
     ALU.sub(a, b)
     if a == b:
         regs['pc'].assign(regs['pc'].val + offset)
@@ -109,15 +105,48 @@ def GOTO(offset):
     clk()
 
 def IADD():
-    regs["sp"].dec()
-    clk()
-    a = readMem(regs['sp'].val)
-    regs['sp'].dec()
-    clk()
-    b = readMem(regs['sp'].val)
+    a = pop()
+    regs['acc'].assign(a)
+    b = pop()
+    regs['dr'].assign(b)
     ALU.add(a, b)
     write_mem(regs['sp'].val, a + b)
     regs['sp'].inc()
     clk()
 
-def
+def BIPUSH(byte):
+    write_mem(regs['sp'].val, byte)
+    regs["sp"].inc()
+    clk()
+
+def pop():
+    regs["sp"].dec()
+    clk()
+    a = readMem(regs['sp']).val
+    clk()
+    return a
+
+
+def ISUB():
+    a = pop()
+    b = pop()
+    ALU.sub(a, b)
+    write_mem(regs['sp'].val, a + b)
+    regs['sp'].inc()
+    clk()
+
+def ISTORE(varnum):
+    regs['ar'].assign(regs['lv'].val + 4 * varnum)
+    clk()
+    a = pop()
+    regs['acc'].assign(a)
+    write_mem(regs['ar'].data, a)
+
+def IINC(varnum, const):
+    regs['ar'].assign(regs['ar'].val + 4 * varnum)
+    clk()
+    a = readMem(regs['ar'].val)
+    regs['acc'].assign(const)
+    ALU.add(const, a)
+    write_mem(regs['ar'].val, a + const)
+    
