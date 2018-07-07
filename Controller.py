@@ -53,6 +53,8 @@ def readMem(addr):
         clk()
     return data
 
+def write_mem(addr, data): ## TODO
+
 def fetch():
     regs['ar'].assign(regs['pc'].val)
     clk()
@@ -70,9 +72,9 @@ def NOP():
     clk()
 
 def IFEQ(offset):
-    a = readMem(regs["sp"].val)
     regs["sp"].dec()
     clk()
+    a = readMem(regs["sp"].val)
     ALU.ent_a(a, b = 0)
     if a == 0:
         regs['pc'].assign(regs['pc'].val + offset)
@@ -80,9 +82,9 @@ def IFEQ(offset):
         regs['pc'].inc()
 
 def IFLT(offset):
-    a = readMem(regs['sp'].val)
     regs['sp'].dec()
     clk()
+    a = readMem(regs['sp'].val)
     ALU.ent_a(a, b = 0)
     if a < 0:
         regs['pc'].assign(regs['pc'].val + offset)
@@ -90,12 +92,12 @@ def IFLT(offset):
         regs['pc'].inc()
 
 def IF_ICMPEQ(offset):
-    a = readMem(regs["sp"].val)
     regs["sp"].dec()
     clk()
-    b = readMem(regs['sp'].val)
+    a = readMem(regs["sp"].val)
     regs['sp'].dec()
     clk()
+    b = readMem(regs['sp'].val)
     ALU.sub(a, b)
     if a == b:
         regs['pc'].assign(regs['pc'].val + offset)
@@ -103,3 +105,19 @@ def IF_ICMPEQ(offset):
         regs['pc'].inc()
 
 def GOTO(offset):
+    regs['pc'].assign(regs['pc'].val + offset)
+    clk()
+
+def IADD():
+    regs["sp"].dec()
+    clk()
+    a = readMem(regs['sp'].val)
+    regs['sp'].dec()
+    clk()
+    b = readMem(regs['sp'].val)
+    ALU.add(a, b)
+    write_mem(regs['sp'].val, a + b)
+    regs['sp'].inc()
+    clk()
+
+def
