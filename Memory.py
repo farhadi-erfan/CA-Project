@@ -1,5 +1,7 @@
 from random import *
 from Clocketc import *
+
+
 class Memory(Clockable):
     def __init__(self, size = 256, arr = None, minDelay = 1, maxDelay = 4):
         Clockable.__init__(self)
