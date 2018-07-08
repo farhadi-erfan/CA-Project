@@ -22,6 +22,7 @@ regs = {}
 clock = 0
 init()
 datas = [{}] * maxClock
+alu = ALU()
 
 def clk():
     global clock
@@ -76,7 +77,7 @@ def NOP():
 def IFEQ(offset):
     a = pop()
     regs['acc'].assign(a)
-    ALU.ent_a(a, b = 0)
+    alu.ent_a(a, b = 0)
     if a == 0:
         regs['pc'].assign(regs['pc'].val + offset)
     else:
@@ -85,7 +86,7 @@ def IFEQ(offset):
 def IFLT(offset):
     a = pop()
     regs['acc'].assign(a)
-    ALU.ent_a(a, b = 0)
+    alu.ent_a(a, b = 0)
     if a < 0:
         regs['pc'].assign(regs['pc'].val + offset)
     else:
@@ -96,7 +97,7 @@ def IF_ICMPEQ(offset):
     regs['acc'].assign(a)
     b = pop()
     regs['dr'].assign(b)
-    ALU.sub(a, b)
+    alu.sub(a, b)
     if a == b:
         regs['pc'].assign(regs['pc'].val + offset)
     else:
@@ -111,7 +112,7 @@ def IADD():
     regs['acc'].assign(a)
     b = pop()
     regs['dr'].assign(b)
-    ALU.add(a, b)
+    alu.add(a, b)
     write_mem(regs['sp'].val, a + b)
     regs['sp'].inc()
     clk()
@@ -132,7 +133,7 @@ def pop():
 def ISUB():
     a = pop()
     b = pop()
-    ALU.sub(a, b)
+    alu.sub(a, b)
     write_mem(regs['sp'].val, a + b)
     regs['sp'].inc()
     clk()
@@ -149,5 +150,6 @@ def IINC(varnum, const):
     clk()
     a = readMem(regs['ar'].val)
     regs['acc'].assign(const)
-    ALU.add(const, a)
+    alu.add(const, a)
     write_mem(regs['ar'].val, a + const)
+

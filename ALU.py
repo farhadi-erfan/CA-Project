@@ -2,7 +2,7 @@
 from Clocketc import *
 class ALU(Clockable):
     def __init__(self):
-        super()
+        super().__init__()
         self.datasOfThisClk["Z"] = 0
         self.datasOfThisClk["N"] = 0
         self.datasOfThisClk["opcode"] = 0
