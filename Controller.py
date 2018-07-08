@@ -1,10 +1,14 @@
 from Memory import *
 from Reg import *
 from Cache import *
-from random import *
+import re
 from ALU import *
 
-def init(pc = 0, lv = 64, sp = 128, cpp = 192, maxClock = 50):
+def prrint():
+    print("kako :))")
+
+def init(fname = 'input.txt', size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, maxClock = 50):
+    regs = {}
     regs['pc'] = Register(pc)
     regs['lv'] = Register(lv)
     regs['sp'] = Register(sp)
@@ -14,13 +18,44 @@ def init(pc = 0, lv = 64, sp = 128, cpp = 192, maxClock = 50):
     regs['tr'] = Register()
     regs['acc'] = Register()
     regs['ir'] = Register()
-    maxClock = maxClock
-maxClock = 50
-mem = Memory()
+    enc = {}
+    enc["BIPUSH"] = int("10", base=16)
+    enc["GOTO"] = int("A7", base=16)
+    enc["IADD"] = int("60", base=16)
+    enc["IFEQ"] = int("99", base=16)
+    enc["IFLT"] = int("9B", base=16)
+    enc["IF_ICMPEQ"] = int("9F", base=16)
+    enc["IINC"] = int("84", base=16)
+    enc["ILOAD"] = int("15", base=16)
+    enc["ISUB"] = int("64", base=16)
+    enc["NOP"] = 0
+    arr = [0] * size
+    with open(fname) as file:
+        head = 0
+        for l in file:
+            print(l, end="")
+            words = l.split()
+            if words[0] == "ORG":
+                head = int(words[1])
+            else:
+                arr[head] = enc[words[0]]
+                if words[0] == "BIPUSH" or words[0] == "ILOAD":
+                    head += 1
+                    byte = int(words[1]) % 256
+                    arr[head] = byte
+                elif words[0] == "IINC" or words[0] == "GOTO" or words[0] == "IFEQ" or words[0] == "IFLT" or words[0] == "IF_ICMPEQ":
+                    head += 1
+                    dbyte = int(words[1]) % (2 ** 16)
+                    arr[head] = dbyte / 256
+                    head += 1
+                    arr[head] = dbyte % 256
+                head += 1
+    print(arr)
+    return maxClock, Memory(size, arr), enc, regs
+
 cache = Cache()
-regs = {}
 clock = 0
-init()
+maxClock, mem, enc, regs = init(size=16)
 datas = [{}] * maxClock
 alu = ALU()
 
@@ -54,9 +89,19 @@ def readMem(addr):
         clk()
     return data
 
+def decode():
+    dec = {v: k for k, v in enc.items()}
+    opCode = regs['ir'].val / (2 ** 24)
+    globals()[dec[opCode]]()
+
+
 def write_mem(addr, data):
-    ## TODO
-    pass
+    if cache.isIn(addr):
+        cache.write(addr, data)
+    else:
+        readMem(addr)
+        cache.write(addr, data)
+    clk()
 
 def fetch():
     regs['ar'].assign(regs['pc'].val)

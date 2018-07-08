@@ -1,8 +1,9 @@
 # this module is created by Sina, One of the best teammates ever.
+# joon
 from Clocketc import *
 class ALU(Clockable):
     def __init__(self):
-        super().__init__()
+        Clockable.__init__(self)
         self.datasOfThisClk["Z"] = 0
         self.datasOfThisClk["N"] = 0
         self.datasOfThisClk["opcode"] = 0

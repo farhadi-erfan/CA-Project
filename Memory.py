@@ -10,6 +10,7 @@ class Memory(Clockable):
             self.arr = [0] * size
         else:
             self.arr = arr
+            self.size = len(arr)
         self.minDelay = minDelay
         self.maxDelay = maxDelay
         self.datasOfThisClk["reset"] = False
@@ -35,10 +36,26 @@ class Memory(Clockable):
         self.datasOfThisClk["start"] = True
         self.datasOfThisClk["rwn"] = True
         self.datasOfThisClk["ready"] = False
-        return self.arr[addr]
+        return ((self.arr[addr] * 256 + self.arr[addr + 1]) * 256 + self.arr[addr + 2]) * 256 + self.arr[addr + 3]
 
     def write(self, addr, data):
         self.datasOfThisClk["start"] = True
         self.datasOfThisClk["rwn"] = False
         self.datasOfThisClk["ready"] = False
-        self.arr[addr] = data
+        pdata = self.partition(data)
+        self.arr[addr] = data[0]
+        self.arr[addr + 1] = data[1]
+        self.arr[addr + 2] = data[2]
+        self.arr[addr + 3] = data[3]
+
+
+    def partition(self, data):
+        data1 = data % 256
+        data /= 256
+        data2 = data % 256
+        data /= 256
+        data3 = data % 256
+        data /= 256
+        data4 = data % 256
+        return (data4, data3, data2, data1)
+

@@ -1,3 +1,4 @@
+from Clocketc import *
 class CacheCell:
     def __init__(self, addr = 0, data = 0):
         self.data = data
@@ -5,8 +6,9 @@ class CacheCell:
         self.usage = 0
         self.dirty = False
 
-class Cache:
+class Cache(Clockable):
     def __init__(self, size = 64, way = 2):
+        Clockable.__init__(self)
         self.size = size
         self.way = way
         self.arr = [[CacheCell()] * way] * size
