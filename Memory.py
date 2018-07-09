@@ -1,4 +1,4 @@
-from random import *
+import random
 from Clocketc import *
 
 
@@ -19,6 +19,7 @@ class Memory(Clockable):
         self.datasOfThisClk["ready"] = True
 
     def clk(self):
+        self.showData()
         self.datasOfThisClk["reset"] = False
         self.datasOfThisClk["start"] = False
 
@@ -36,26 +37,39 @@ class Memory(Clockable):
         self.datasOfThisClk["start"] = True
         self.datasOfThisClk["rwn"] = True
         self.datasOfThisClk["ready"] = False
-        return ((self.arr[addr] * 256 + self.arr[addr + 1]) * 256 + self.arr[addr + 2]) * 256 + self.arr[addr + 3]
+        if addr + 3 < self.size:
+            return ((self.arr[addr] * 256 + self.arr[addr + 1]) * 256 + self.arr[addr + 2]) * 256 + self.arr[addr + 3]
 
     def write(self, addr, data):
         self.datasOfThisClk["start"] = True
         self.datasOfThisClk["rwn"] = False
         self.datasOfThisClk["ready"] = False
         pdata = self.partition(data)
-        self.arr[addr] = data[0]
-        self.arr[addr + 1] = data[1]
-        self.arr[addr + 2] = data[2]
-        self.arr[addr + 3] = data[3]
+        self.arr[addr] = pdata[0]
+        self.arr[addr + 1] = pdata[1]
+        self.arr[addr + 2] = pdata[2]
+        self.arr[addr + 3] = pdata[3]
 
 
     def partition(self, data):
         data1 = data % 256
-        data /= 256
+        data //= 256
         data2 = data % 256
-        data /= 256
+        data //= 256
         data3 = data % 256
-        data /= 256
+        data //= 256
         data4 = data % 256
         return (data4, data3, data2, data1)
 
+
+    def prArr(self):
+        out = []
+        for i in range(self.size):
+            if self.arr[i] != 0:
+                out += [(i, self.arr[i])]
+        print(out)
+
+    def showData(self):
+        print("Memory", end = " ")
+        Clockable.showData(self)
+        print()
