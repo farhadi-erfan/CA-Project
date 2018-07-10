@@ -52,7 +52,7 @@ class GraphWin(tk.Canvas):
     """A GraphWin is a toplevel window for displaying graphics."""
 
     def __init__(self, title="IJVM Emulator",
-                 width=1000, height=1000, autoflush=True):
+                 width=550, height=500, autoflush=True):
         assert type(title) == type(""), "Title must be a string"
         master = tk.Toplevel(_root)
         master.protocol("WM_DELETE_WINDOW", self.close)
@@ -436,374 +436,52 @@ class _BBox(GraphicsObject):
         return Point((p1.x + p2.x) / 2.0, (p1.y + p2.y) / 2.0)
 
 
-class Rectangle(_BBox):
-
-    def __init__(self, p1, p2):
-        _BBox.__init__(self, p1, p2)
-
-    def __repr__(self):
-        return "Rectangle({}, {})".format(str(self.p1), str(self.p2))
-
-    def _draw(self, canvas, options):
-        p1 = self.p1
-        p2 = self.p2
-        x1, y1 = canvas.toScreen(p1.x, p1.y)
-        x2, y2 = canvas.toScreen(p2.x, p2.y)
-        return canvas.create_rectangle(x1, y1, x2, y2, options)
-
-    def clone(self):
-        other = Rectangle(self.p1, self.p2)
-        other.config = self.config.copy()
-        return other
-
-
-class Oval(_BBox):
-
-    def __init__(self, p1, p2):
-        _BBox.__init__(self, p1, p2)
-
-    def __repr__(self):
-        return "Oval({}, {})".format(str(self.p1), str(self.p2))
-
-    def clone(self):
-        other = Oval(self.p1, self.p2)
-        other.config = self.config.copy()
-        return other
-
-    def _draw(self, canvas, options):
-        p1 = self.p1
-        p2 = self.p2
-        x1, y1 = canvas.toScreen(p1.x, p1.y)
-        x2, y2 = canvas.toScreen(p2.x, p2.y)
-        return canvas.create_oval(x1, y1, x2, y2, options)
-
-
-class Circle(Oval):
-
-    def __init__(self, center, radius):
-        p1 = Point(center.x - radius, center.y - radius)
-        p2 = Point(center.x + radius, center.y + radius)
-        Oval.__init__(self, p1, p2)
-        self.radius = radius
-
-    def __repr__(self):
-        return "Circle({}, {})".format(str(self.getCenter()), str(self.radius))
-
-    def clone(self):
-        other = Circle(self.getCenter(), self.radius)
-        other.config = self.config.copy()
-        return other
-
-    def getRadius(self):
-        return self.radius
-
-
-class Line(_BBox):
-
-    def __init__(self, p1, p2):
-        _BBox.__init__(self, p1, p2, ["arrow", "fill", "width"])
-        self.setFill(DEFAULT_CONFIG['outline'])
-        self.setOutline = self.setFill
-
-    def __repr__(self):
-        return "Line({}, {})".format(str(self.p1), str(self.p2))
-
-    def clone(self):
-        other = Line(self.p1, self.p2)
-        other.config = self.config.copy()
-        return other
-
-    def _draw(self, canvas, options):
-        p1 = self.p1
-        p2 = self.p2
-        x1, y1 = canvas.toScreen(p1.x, p1.y)
-        x2, y2 = canvas.toScreen(p2.x, p2.y)
-        return canvas.create_line(x1, y1, x2, y2, options)
-
-    def setArrow(self, option):
-        if not option in ["first", "last", "both", "none"]:
-            raise GraphicsError(BAD_OPTION)
-        self._reconfig("arrow", option)
-
-
-class Text(GraphicsObject):
-
-    def __init__(self, p, text):
-        GraphicsObject.__init__(self, ["justify", "fill", "text", "font"])
-        self.setText(text)
-        self.anchor = p.clone()
-        self.setFill(DEFAULT_CONFIG['outline'])
-        self.setOutline = self.setFill
-
-    def __repr__(self):
-        return "Text({}, '{}')".format(self.anchor, self.getText())
-
-    def _draw(self, canvas, options):
-        p = self.anchor
-        x, y = canvas.toScreen(p.x, p.y)
-        return canvas.create_text(x, y, options)
-
-    def _move(self, dx, dy):
-        self.anchor.move(dx, dy)
-
-    def clone(self):
-        other = Text(self.anchor, self.config['text'])
-        other.config = self.config.copy()
-        return other
-
-    def setText(self, text):
-        self._reconfig("text", text)
-
-    def getText(self):
-        return self.config["text"]
-
-    def getAnchor(self):
-        return self.anchor.clone()
-
-    def setFace(self, face):
-        if face in ['helvetica', 'arial', 'courier', 'times roman']:
-            f, s, b = self.config['font']
-            self._reconfig("font", (face, s, b))
-        else:
-            raise GraphicsError(BAD_OPTION)
-
-    def setSize(self, size):
-        if 5 <= size <= 36:
-            f, s, b = self.config['font']
-            self._reconfig("font", (f, size, b))
-        else:
-            raise GraphicsError(BAD_OPTION)
-
-    def setStyle(self, style):
-        if style in ['bold', 'normal', 'italic', 'bold italic']:
-            f, s, b = self.config['font']
-            self._reconfig("font", (f, s, style))
-        else:
-            raise GraphicsError(BAD_OPTION)
-
-    def setTextColor(self, color):
-        self.setFill(color)
-
-
-class Entry(GraphicsObject):
-
-    def __init__(self, p, width):
-        GraphicsObject.__init__(self, [])
-        self.anchor = p.clone()
-        # print self.anchor
-        self.width = width
-        self.text = tk.StringVar(_root)
-        self.text.set("")
-        self.fill = "gray"
-        self.color = "black"
-        self.font = DEFAULT_CONFIG['font']
-        self.entry = None
-
-    def __repr__(self):
-        return "Entry({}, {})".format(self.anchor, self.width)
-
-    def _draw(self, canvas, options):
-        p = self.anchor
-        x, y = canvas.toScreen(p.x, p.y)
-        frm = tk.Frame(canvas.master)
-        self.entry = tk.Entry(frm,
-                              width=self.width,
-                              textvariable=self.text,
-                              bg=self.fill,
-                              fg=self.color,
-                              font=self.font)
-        self.entry.pack()
-        # self.setFill(self.fill)
-        self.entry.focus_set()
-        return canvas.create_window(x, y, window=frm)
-
-    def getText(self):
-        return self.text.get()
-
-    def _move(self, dx, dy):
-        self.anchor.move(dx, dy)
-
-    def getAnchor(self):
-        return self.anchor.clone()
-
-    def clone(self):
-        other = Entry(self.anchor, self.width)
-        other.config = self.config.copy()
-        other.text = tk.StringVar()
-        other.text.set(self.text.get())
-        other.fill = self.fill
-        return other
-
-    def setText(self, t):
-        self.text.set(t)
-
-    def setFill(self, color):
-        self.fill = color
-        if self.entry:
-            self.entry.config(bg=color)
-
-    def _setFontComponent(self, which, value):
-        font = list(self.font)
-        font[which] = value
-        self.font = tuple(font)
-        if self.entry:
-            self.entry.config(font=self.font)
-
-    def setFace(self, face):
-        if face in ['helvetica', 'arial', 'courier', 'times roman']:
-            self._setFontComponent(0, face)
-        else:
-            raise GraphicsError(BAD_OPTION)
-
-    def setSize(self, size):
-        if 5 <= size <= 36:
-            self._setFontComponent(1, size)
-        else:
-            raise GraphicsError(BAD_OPTION)
-
-    def setStyle(self, style):
-        if style in ['bold', 'normal', 'italic', 'bold italic']:
-            self._setFontComponent(2, style)
-        else:
-            raise GraphicsError(BAD_OPTION)
-
-    def setTextColor(self, color):
-        self.color = color
-        if self.entry:
-            self.entry.config(fg=color)
-
-
-class Image(GraphicsObject):
-    idCount = 0
-    imageCache = {}  # tk photoimages go here to avoid GC while drawn
-
-    def __init__(self, p, *pixmap):
-        GraphicsObject.__init__(self, [])
-        self.anchor = p.clone()
-        self.imageId = Image.idCount
-        Image.idCount = Image.idCount + 1
-        if len(pixmap) == 1:  # file name provided
-            self.img = tk.PhotoImage(file=pixmap[0], master=_root)
-        else:  # width and height provided
-            width, height = pixmap
-            self.img = tk.PhotoImage(master=_root, width=width, height=height)
-
-    def __repr__(self):
-        return "Image({}, {}, {})".format(self.anchor, self.getWidth(), self.getHeight())
-
-    def _draw(self, canvas, options):
-        p = self.anchor
-        x, y = canvas.toScreen(p.x, p.y)
-        self.imageCache[self.imageId] = self.img  # save a reference
-        return canvas.create_image(x, y, image=self.img)
-
-    def _move(self, dx, dy):
-        self.anchor.move(dx, dy)
-
-    def undraw(self):
-        try:
-            del self.imageCache[self.imageId]  # allow gc of tk photoimage
-        except KeyError:
-            pass
-        GraphicsObject.undraw(self)
-
-    def getAnchor(self):
-        return self.anchor.clone()
-
-    def clone(self):
-        other = Image(Point(0, 0), 0, 0)
-        other.img = self.img.copy()
-        other.anchor = self.anchor.clone()
-        other.config = self.config.copy()
-        return other
-
-    def getWidth(self):
-        """Returns the width of the image in pixels"""
-        return self.img.width()
-
-    def getHeight(self):
-        """Returns the height of the image in pixels"""
-        return self.img.height()
-
-    def getPixel(self, x, y):
-        """Returns a list [r,g,b] with the RGB color values for pixel (x,y)
-        r,g,b are in range(256)
-
-        """
-
-        value = self.img.get(x, y)
-        if type(value) == type(0):
-            return [value, value, value]
-        elif type(value) == type((0, 0, 0)):
-            return list(value)
-        else:
-            return list(map(int, value.split()))
-
-    def setPixel(self, x, y, color):
-        """Sets pixel (x,y) to the given color
-
-        """
-        self.img.put("{" + color + "}", (x, y))
-
-    def save(self, filename):
-        """Saves the pixmap image to filename.
-        The format for the save image is determined from the filname extension.
-
-        """
-
-        path, name = os.path.split(filename)
-        ext = name.split(".")[-1]
-        self.img.write(filename, format=ext)
-
-
-def color_rgb(r, g, b):
-    """r,g,b are intensities of red, green, and blue in range(256)
-    Returns color specifier string for the resulting color"""
-    return "#%02x%02x%02x" % (r, g, b)
 
 def openfile(win):
     fn = askopenfilename()
     win.filename = fn
 
+def emulate(win):
+    # TODO
+    if win.filename == "":
+        raise Exception("No file selected.")
+    pass
+
 def test():
     win = GraphWin()
     win.setCoords(0, 0, 10, 10)
-    t = Text(Point(5, 5), "Centered Text")
-    t.draw(win)
-    e = Entry(Point(5, 6), 10)
-    e.draw(win)
-    B = Button(win, text = "open file", command=lambda : openfile(win))
-    B.place(x=0, y=0)
-    win.getMouse()
-    print(win.filename)
-    s = ""
-    t.setText(e.getText())
-    e.setFill("green")
-    e.setText("Spam!")
-    e.move(2, 0)
+    b_open = Button(win, text="open file", command=lambda: openfile(win))
+    b_open.place(x=400, y=300)
+    b_emulate = Button(win, text="emulate", command=lambda: emulate(win))
+    b_emulate.place(x=300, y=300)
+    var = StringVar()
+    zin = 0
 
+    str = """Select code file to emulate.
+        values of registers and signals are shown below.
+        final values and memory data are reported in a text file at last."""
+    w = Label(win, text=str, fg="green", font=("Helvetica", 14),
+              justify=CENTER, wraplength=0, highlightthickness=2,
+              highlightbackground="black")
+    var.set("salam:" + zin.__str__())
+    label = Label(win, textvariable=var)
+    label.place(x=200, y=200)
+    w.place(x=12, y=50)
+
+    win.photo = PhotoImage(file="forward.gif")
+    clock_button = Button(win, text="next")
+    clock_button.place(x=100, y=250)
+    # ph = Label(image=my_image)
+    # ph.image = my_image
+    # label.place(x=100, y=200)
     win.getMouse()
-    s = ""
-    t.setText(s)
-    win.getMouse()
-    e.undraw()
-    t.setStyle("bold")
-    win.getMouse()
-    t.setStyle("normal")
-    win.getMouse()
-    t.setStyle("italic")
-    win.getMouse()
-    t.setStyle("bold italic")
-    win.getMouse()
-    t.setSize(14)
-    win.getMouse()
-    t.setFace("arial")
-    t.setSize(20)
-    win.getMouse()
-    win.close()
 
 
 update()
 
 if __name__ == "__main__":
     test()
+
+
+
+
