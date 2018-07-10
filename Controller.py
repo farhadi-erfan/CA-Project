@@ -4,7 +4,8 @@ from Cache import *
 from ALU import *
 import sys
 
-def init(fname = 'input.txt', size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, maxClock = 80):
+
+def init(fname = 'input.txt', size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, maxClock = 30):
     regs = {}
     regs['pc'] = Register('pc', pc)
     regs['lv'] = Register('lv', lv)
@@ -14,7 +15,7 @@ def init(fname = 'input.txt', size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, 
     regs['dr'] = Register('dr')
     regs['tr'] = Register('tr')
     regs['acc'] = Register('acc')
-    regs['ir'] = Register('ir')
+    regs['ir'] = Register('ir', radix = 16)
     enc = {}
     enc["BIPUSH"] = int("10", base=16)
     enc["GOTO"] = int("A7", base=16)
@@ -39,15 +40,24 @@ def init(fname = 'input.txt', size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, 
                 if words[0] == "BIPUSH" or words[0] == "ILOAD":
                     head += 1
                     byte = int(words[1]) % 256
+                    # if int(words[1]) < 0:
+                    #      byte -= 256
                     arr[head] = byte
-                elif words[0] == "IINC" or words[0] == "GOTO" or words[0] == "IFEQ" or words[0] == "IFLT" or words[0] == "IF_ICMPEQ":
+                elif words[0] == "GOTO" or words[0] == "IFEQ" or words[0] == "IFLT" or words[0] == "IF_ICMPEQ":
                     head += 1
                     dbyte = int(words[1]) % (2 ** 16)
                     arr[head] = dbyte // 256
                     head += 1
                     arr[head] = dbyte % 256
+                elif words[0] == "IINC":
+                    head += 1
+                    byte = int(words[1]) % 256
+                    arr[head] = byte
+                    head += 1
+                    byte = int(words[2]) % 256
+                    arr[head] = byte
                 head += 1
-    # print(arr)
+    print(arr)
     return maxClock, Memory(size, arr), enc, regs
 
 maxClock, mem, enc, regs = init()
@@ -71,6 +81,8 @@ def clk():
         cache.clk()
         datas[clock]['mem'] = mem.datasOfThisClk
         mem.clk()
+        datas[clock]['ALU'] = alu.datasOfThisClk
+        alu.clk()
         clock += 1
 
 def readMem(addr):
@@ -104,6 +116,11 @@ def fenito():
             clk()
         mem.datasOfThisClk["ready"] = True
         clk()
+    x = regs['sp'].val
+    while x < regs['cpp'].val:
+        if mem.arr[x] > 0:
+            mem.arr[x] = 0
+        x += 1
 
 def writeMem(addr, data):
     if cache.isIn(addr):
@@ -139,6 +156,11 @@ def IFEQ():
         regs['pc'].assign(regs['pc'].val + offset)
     else:
         regs['pc'].inc()
+        clk()
+        regs['pc'].inc()
+        clk()
+        regs['pc'].inc()
+    clk()
 
 def IFLT():
     a = pop()
@@ -148,6 +170,11 @@ def IFLT():
         regs['pc'].assign(regs['pc'].val + offset)
     else:
         regs['pc'].inc()
+        clk()
+        regs['pc'].inc()
+        clk()
+        regs['pc'].inc()
+    clk()
 
 def IF_ICMPEQ():
     a = pop()
@@ -180,10 +207,18 @@ def IADD():
     writeMem(regs['sp'].val, a + b)
     regs['sp'].inc()
     clk()
+    regs['sp'].inc()
+    regs['pc'].inc()
+    clk()
+    regs['sp'].inc()
+    clk()
+    regs['sp'].inc()
+    clk()
 
 def BIPUSH():
     regs['ar'].assign(regs['sp'].val)
     clk()
+    regs['dr'].assign(byte)
     writeMem(regs['ar'].val, byte)
     regs["sp"].inc()
     regs['pc'].inc()
@@ -198,26 +233,53 @@ def BIPUSH():
 
 def ISUB():
     a = pop()
+    regs['acc'].assign(a)
     b = pop()
+    regs['dr'].assign(b)
     alu.sub(a, b)
-    writeMem(regs['sp'].val, a + b)
+    writeMem(regs['sp'].val, a - b)
+    regs['sp'].inc()
+    clk()
+    regs['sp'].inc()
+    regs['pc'].inc()
+    clk()
+    regs['sp'].inc()
+    clk()
     regs['sp'].inc()
     clk()
 
 def ILOAD():
     regs['ar'].assign(regs['lv'].val + 4 * varnum)
+    regs['pc'].inc()
     clk()
-    a = pop()
-    regs['acc'].assign(a)
-    writeMem(regs['ar'].data, a)
+    v = read()
+    regs['pc'].inc()
+    clk()
+    regs['pc'].inc()
+    writeMem(regs['sp'].val, v)
+    regs['sp'].inc()
+    clk()
+    regs['sp'].inc()
+    clk()
+    regs['sp'].inc()
+    clk()
+    regs['sp'].inc()
+    clk()
 
 def IINC():
-    regs['ar'].assign(regs['ar'].val + 4 * varnum)
+    regs['ar'].assign(regs['lv'].val + 4 * varnum)
+    regs['pc'].inc()
     clk()
-    a = readMem(regs['ar'].val)
+    a = read()
+    regs['dr'].assign(a)
+    regs['pc'].inc()
+    clk()
     regs['acc'].assign(const)
+    regs['pc'].inc()
+    clk()
+    regs['tr'].assign(regs['lv'].val + 4 * varnum)
     alu.add(const, a)
-    writeMem(regs['ar'].val, a + const)
+    writeMem(regs['tr'].val, a + const)
 
 def read():
     v = cache.read(regs['ar'].val)
@@ -240,6 +302,10 @@ def decode():
     const = (v // 256) % 256
     varnum = (v // (2 ** 16)) % 256
     byte = (v // (2 ** 16)) % 256
+    if byte > 127:
+        byte -= 256
+    if offset > (2 ** 15):
+        offset -= 2 ** 16
     globals()[dec[opCode]]()
 
 while clock < maxClock:

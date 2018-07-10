@@ -33,11 +33,15 @@ class Memory(Clockable):
         else:
             self.arr = arr
 
+
+
     def read(self, addr):
         self.datasOfThisClk["start"] = True
         self.datasOfThisClk["rwn"] = True
         self.datasOfThisClk["ready"] = False
         if addr + 3 < self.size:
+            # print(hex(self.arr[addr + 1]))
+            # return (bits(self.arr[addr ], 8), bits(self.arr[addr + 1], 8), bits(self.arr[addr + 2], 8), bits(self.arr[addr + 3], 8))
             return ((self.arr[addr] * 256 + self.arr[addr + 1]) * 256 + self.arr[addr + 2]) * 256 + self.arr[addr + 3]
 
     def write(self, addr, data):
@@ -73,3 +77,33 @@ class Memory(Clockable):
         print("Memory", end = " ")
         Clockable.showData(self)
         print()
+
+def bits(number, size_in_bits):
+    if number < 0:
+        return compliment(bin(abs(number) - 1)[2:]).rjust(size_in_bits, '1')
+    else:
+        return bin(number)[2:].rjust(size_in_bits, '0')
+
+def compliment(value):
+    return ''.join(COMPLEMENT[x] for x in value)
+
+COMPLEMENT = {'1': '0', '0': '1'}
+
+def addOne(bits):
+    i = len(bits) - 1
+    while i >= 0:
+        if bits[i] == '1':
+            bits = bits[:i] + '0' + bits[i + 1:]
+        elif bits[i] == '0':
+            bits = bits[:i] + '1' + bits[i + 1:]
+            print(bits)
+            return bits
+        i -= 1
+    print('1' + '0' * len(bits))
+    return '1' + '0' * len(bits)
+
+def checkNeg(bits):
+    if bits[0] == '1':
+        return -int(addOne(compliment(bits)), 2)
+    else:
+        return int(bits, 2)

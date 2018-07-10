@@ -1,9 +1,10 @@
 from Clocketc import *
 class Register(Clockable):
-    def __init__(self, name, val = 0):
+    def __init__(self, name, val = 0, radix = 10):
         Clockable.__init__(self)
         self.name = name
         self.val = val
+        self.radix = radix
         self.datasOfThisClk["inc"] = False
         self.datasOfThisClk["load"] = False
         self.datasOfThisClk["dec"] = False
@@ -16,7 +17,7 @@ class Register(Clockable):
         else:
             self.val = -(-data % (2** 31))
         self.datasOfThisClk["val"] = self.val
-        if data // (2** 31) != 0:
+        if data // (2** 31) != 0 and data >= 0:
             print("overflow")
 
     def inc(self):
@@ -31,8 +32,15 @@ class Register(Clockable):
 
     def showData(self):
         print(self.name, end = " ")
-        Clockable.showData(self)
-        print()
+        if self.radix == 10:
+            Clockable.showData(self)
+            print()
+        elif self.radix == 16:
+            for k, v in self.datasOfThisClk.items():
+                if k.__str__() == "val":
+                    print(k.__str__() + ":", hex(v))
+                else:
+                    print(k.__str__() + ":" + v.__str__(), end=", ")
 
     def clk(self):
         self.showData()
