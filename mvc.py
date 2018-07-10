@@ -2,4 +2,4 @@
 #
 # print(dir(module))
 import runpy
-runpy.run_module("Controller", {"fname":"input.txt"})
+runpy.run_module("Controller", {"fname":"input.txt", "maxClock":60})
