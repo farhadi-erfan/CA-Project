@@ -442,25 +442,32 @@ def openfile(win, b):
     fn = askopenfilename()
     win.filename = fn
 
-def emulate(win):
-    # TODO
+class Data_container:
+    def __init__(self):
+        self.data = 0
+
+
+def emulate(win, dc):
+    global A
     if win.filename == "":
         raise Exception("No file selected.")
-    pass
+    import runpy
+    a = runpy.run_module("Controller", {"fname": "input.txt", "maxClock": 60})
+    dc.data = a['datas']
 
 def test():
+    global A
     win = GraphWin()
+    dc = Data_container()
     win.setCoords(0, 0, 10, 10)
-    b_emulate = Button(win, text="emulate", command=lambda: emulate(win)
-                       ,fg = "#a1dbcd", bg = "#383a39", state="disabled")
-    b_emulate.place(x=300, y=300)
+    b_emulate = Button(win, text="emulate", command=lambda: emulate(win, dc)
+                       ,fg = "#a1dbcd", bg="#383a39", state="disabled")
+    b_emulate.place(x=350, y=450)
     b_open = Button(win, text="open file", command=lambda: openfile(win, b_emulate)
     ,fg = "#a1dbcd", bg = "#383a39")
-    b_open.place(x=400, y=300)
+    b_open.place(x=450, y=450)
     var = StringVar()
-
     zin = 0
-
     str = """Select code file to emulate.
         values of registers and signals are shown below.
         final values and memory data are reported in a text file at last."""
@@ -470,10 +477,10 @@ def test():
     var.set("salam:" + zin.__str__())
     label = Label(win, textvariable=var)
     label.place(x=200, y=200)
-    w.place(x=12, y=50)
+    w.place(x=4, y=50)
     win.photo = PhotoImage(file="forward.gif")
     clock_button = Button(win, text="next", fg="#a1dbcd", bg="#383a39")
-    clock_button.place(x=100, y=250)
+    clock_button.place(x=270, y=450)
 
     win.getMouse()
 

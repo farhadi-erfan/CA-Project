@@ -6,6 +6,8 @@ import sys
 
 
 def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192):
+    global datas
+    datas = [{} for i in range(maxClock)]
     regs = {}
     regs['pc'] = Register('pc', pc)
     regs['lv'] = Register('lv', lv)
@@ -62,6 +64,7 @@ def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192):
 
 
 global fname, maxClock
+datas = [{} for i in range(maxClock)]
 mem, enc, regs = init(fname)
 cache = Cache()
 alu = ALU()
@@ -70,7 +73,6 @@ offset = 0
 varnum = 0
 const = 0
 byte = 0
-datas = [{} for i in range(maxClock)]
 
 def clk():
     global clock, maxClock
