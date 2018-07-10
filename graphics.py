@@ -450,17 +450,30 @@ def emulate(win):
 def test():
     win = GraphWin()
     win.setCoords(0, 0, 10, 10)
-    b_open = Button(win, text="open file", command=lambda:openfile(win))
+    b_open = Button(win, text="open file", command=lambda: openfile(win))
     b_open.place(x=400, y=300)
-    b_emulate = Button(win, text="emulate", command=lambda : emulate(win))
+    b_emulate = Button(win, text="emulate", command=lambda: emulate(win))
     b_emulate.place(x=300, y=300)
+    var = StringVar()
+    zin = 0
+
     str = """Select code file to emulate.
-    values of registers and signals are shown below.
-    final values and memory data are reported in a text file at last."""
+        values of registers and signals are shown below.
+        final values and memory data are reported in a text file at last."""
     w = Label(win, text=str, fg="green", font=("Helvetica", 14),
               justify=CENTER, wraplength=0, highlightthickness=2,
-               highlightbackground="black")
+              highlightbackground="black")
+    var.set("salam:" + zin.__str__())
+    label = Label(win, textvariable=var)
+    label.place(x=200, y=200)
     w.place(x=12, y=50)
+
+    win.photo = PhotoImage(file="forward.gif")
+    clock_button = Button(win, text="next")
+    clock_button.place(x=100, y=250)
+    # ph = Label(image=my_image)
+    # ph.image = my_image
+    # label.place(x=100, y=200)
     win.getMouse()
 
 
