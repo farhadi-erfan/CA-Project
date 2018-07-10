@@ -1,4 +1,5 @@
 # from graphics import *
 #
-# import Controller as module
 # print(dir(module))
+import runpy
+runpy.run_module("Controller", {"fname":"input.txt"})

@@ -5,7 +5,7 @@ from ALU import *
 import sys
 
 
-def init(fname = 'input.txt', size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, maxClock = 30):
+def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, maxClock = 30):
     regs = {}
     regs['pc'] = Register('pc', pc)
     regs['lv'] = Register('lv', lv)
@@ -60,7 +60,9 @@ def init(fname = 'input.txt', size = 256, pc = 0, lv = 64, sp = 128, cpp = 192, 
     print(arr)
     return maxClock, Memory(size, arr), enc, regs
 
-maxClock, mem, enc, regs = init()
+
+global fname
+maxClock, mem, enc, regs = init(fname)
 cache = Cache()
 alu = ALU()
 clock = 0
