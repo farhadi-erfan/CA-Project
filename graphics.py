@@ -446,24 +446,41 @@ class Data_container:
     def __init__(self):
         self.data = 0
         self.counter = 0
+        self.clksmiss = 0
+        self.clkshit = 0
+        self.cache = None
+        self.mem = None
 
 
 def emulate(win, dc):
     if win.filename == "":
         raise Exception("No file selected.")
     import runpy
-    a = runpy.run_module("Controller", {"fname": "input.txt", "maxClock": 200})
+    a = runpy.run_module("Controller", {"fname": win.filename, "maxClock": 200})
     dc.data = a['datas']
-    # print(dc.data)
+    dc.clksmiss = a['clksmiss']
+    dc.clkshit = a['clkshit']
+    dc.mem = a['mem']
+    dc.cache = a['cache']
+    print("-----------------final status-----------------")
+    print("Throughput:", dc.clkshit)
+    print("utilization:", format(dc.clkshit / (dc.clkshit + dc.clksmiss), ".3f"))
+    print("cache hitRate:", format(dc.cache.datasOfThisClk['hitRate until now'], ".3f"))
+    s = ''
+    for i in dc.mem.arr:
+        s += hex(i)[2:] + ', '
+    s = "[" + s[:len(s) - 2] + "]"
+    print('memory:', s)
 
 def next_func(dc, vars):
     dc.counter += 1
     print(dc.counter)
     print(dc.data[dc.counter])
+    vars["clk"].set("clk:" + str(dc.counter))
     vars["AR"].set("AR:" + str(dc.data[dc.counter]["ar"]["val"]))
     vars["AR-load"].set("AR-load:" + str(dc.data[dc.counter]["ar"]["load"]))
     vars["AR-Inc"].set("AR-Inc:" + str(dc.data[dc.counter]["ar"]["inc"]))
-    vars["IR"].set("IR:" + str(dc.data[dc.counter]["ir"]["val"]))
+    vars["IR"].set("IR:" + hex(dc.data[dc.counter]["ir"]["val"]))
     vars["IR-load"].set("IR-load:" + str(dc.data[dc.counter]["ir"]["load"]))
     vars["IR-Inc"].set("IR-inc:" + str(dc.data[dc.counter]["ir"]["inc"]))
     vars["TR"].set("TR:" + str(dc.data[dc.counter]["tr"]["val"]))
@@ -486,6 +503,49 @@ def next_func(dc, vars):
     vars["PC"].set("PC:" + str(dc.data[dc.counter]["pc"]["val"]))
     vars["PC-load"].set("PC-load:" + str(dc.data[dc.counter]["pc"]["load"]))
     vars["PC-inc"].set("PC-inc:" + str(dc.data[dc.counter]["pc"]["inc"]))
+
+
+def prev_func(dc, vars):
+    dc.counter -= 1
+    print(dc.counter)
+    print(dc.data[dc.counter])
+    vars["clk"].set("clk:" + str(dc.counter))
+    vars["AR"].set("AR:" + str(dc.data[dc.counter]["ar"]["val"]))
+    vars["AR-load"].set("AR-load:" + str(dc.data[dc.counter]["ar"]["load"]))
+    vars["AR-Inc"].set("AR-Inc:" + str(dc.data[dc.counter]["ar"]["inc"]))
+    vars["IR"].set("IR:" + hex(dc.data[dc.counter]["ir"]["val"]))
+    vars["IR-load"].set("IR-load:" + str(dc.data[dc.counter]["ir"]["load"]))
+    vars["IR-Inc"].set("IR-inc:" + str(dc.data[dc.counter]["ir"]["inc"]))
+    vars["TR"].set("TR:" + str(dc.data[dc.counter]["tr"]["val"]))
+    vars["TR-load"].set("TR-load:" + str(dc.data[dc.counter]["tr"]["load"]))
+    vars["TR-inc"].set("TR-inc:" + str(dc.data[dc.counter]["tr"]["inc"]))
+    vars["DR"].set("DR:" + str(dc.data[dc.counter]["dr"]["val"]))
+    vars["DR-load"].set("DR-load:" + str(dc.data[dc.counter]["dr"]["load"]))
+    vars["DR-inc"].set("DR-inc:" + str(dc.data[dc.counter]["dr"]["inc"]))
+    vars["ACC"].set("ACC:" + str(dc.data[dc.counter]["acc"]["val"]))
+    vars["ACC-load"].set("ACC-load:" + str(dc.data[dc.counter]["acc"]["load"]))
+    vars["ACC-inc"].set("ACC-inc:" + str(dc.data[dc.counter]["acc"]["inc"]))
+    vars["SP"].set("SP:" + str(dc.data[dc.counter]["sp"]["val"]))
+    vars["SP-inc"].set("SP-inc:" + str(dc.data[dc.counter]["sp"]["inc"]))
+    vars["lv"].set("lv:" + str(dc.data[dc.counter]["lv"]["val"]))
+    vars["rwn"].set("rwn:" + str(dc.data[dc.counter]["Memory"]["rwn"]))
+    vars["ready"].set("ready:" + str(dc.data[dc.counter]["Memory"]["ready"]))
+    vars["start"].set("start:" + str(dc.data[dc.counter]["Memory"]["start"]))
+    vars["hit rate so far"].set("hit rate so far:" +
+                                str(dc.data[dc.counter]["cache"]["hitRate until now"]))
+    vars["PC"].set("PC:" + str(dc.data[dc.counter]["pc"]["val"]))
+    vars["PC-load"].set("PC-load:" + str(dc.data[dc.counter]["pc"]["load"]))
+    vars["PC-inc"].set("PC-inc:" + str(dc.data[dc.counter]["pc"]["inc"]))
+
+def final_state(win, dc, vars, labels):
+    for name in labels.keys():
+        if name != "Throughput" and name != "Final Hit Rate" and name != "Utilization":
+            labels[name].destroy()
+    vars['Throughput'].set("Throughput:" + str(dc.clkshit))
+    vars["Final Hit Rate"].set("Final Hit Rate:" + format(dc.cache.datasOfThisClk['hitRate until now'], ".3f"))
+    vars['Utilization'].set("Utilization:" + format((dc.clkshit / (dc.clkshit + dc.clksmiss)), ".3f"))
+    pass
+
 def test():
     string = """Select code file to emulate.
         values of registers and signals are shown below.
@@ -500,6 +560,7 @@ def test():
     ,fg="#a1dbcd", bg="#383a39")
     b_open.place(x=450, y=450)
     vars = {}
+    vars["clk"] = StringVar()
     vars["AR"] = StringVar()
     vars["AR-load"] = StringVar()
     vars["AR-Inc"] = StringVar()
@@ -525,6 +586,9 @@ def test():
     vars["PC"] = StringVar()
     vars["PC-load"] = StringVar()
     vars["PC-inc"] = StringVar()
+    vars["Throughput"] = StringVar()
+    vars["Final Hit Rate"] = StringVar()
+    vars["Utilization"] = StringVar()
     labels = {}
     myx = 10
     myy = 200
@@ -544,7 +608,12 @@ def test():
     clock_button = Button(win, text="next", fg="#a1dbcd", bg="#383a39")
     clock_button.place(x=270, y=450)
     clock_button.configure(command=lambda: next_func(dc, vars))
-
+    clock_button2 = Button(win, text="prev", fg="#a1dbcd", bg="#383a39")
+    clock_button2.place(x=220, y=450)
+    clock_button2.configure(command=lambda: prev_func(dc, vars))
+    haji = Button(win, text="Final Statistics", fg="#a1dbcd", bg="#383a39")
+    haji.place(x=90, y=450)
+    haji.configure(command=lambda : final_state(win, dc, vars, labels))
     win.getMouse()
 
 

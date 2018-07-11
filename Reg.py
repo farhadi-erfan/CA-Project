@@ -44,6 +44,7 @@ class Register(Clockable):
 
     def clk(self):
         self.showData()
+        self.datasOfThisClk = {}
         self.datasOfThisClk["inc"] = False
         self.datasOfThisClk["load"] = False
         self.datasOfThisClk["dec"] = False

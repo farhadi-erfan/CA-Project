@@ -11,6 +11,7 @@ class ALU(Clockable):
 
     def clk(self):
         self.showData()
+        self.datasOfThisClk = {}
         self.datasOfThisClk["Z"] = 0
         self.datasOfThisClk["N"] = 0
         self.datasOfThisClk["opcode"] = 0

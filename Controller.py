@@ -6,7 +6,9 @@ import sys
 
 
 def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192):
-    global datas
+    global datas, clksmiss, clkshit, mem, cache
+    clksmiss = 0
+    clkshit = 0
     datas = [{} for i in range(maxClock)]
     regs = {}
     regs['pc'] = Register('pc', pc)
@@ -60,17 +62,18 @@ def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192):
                     arr[head] = byte
                 head += 1
     print(arr)
-    return Memory(size, arr), enc, regs
+    mem = Memory(size, arr)
+    cache = Cache()
+    return enc, regs
 
 
 global fname, maxClock
-maxClock = 120
-fname = "input.txt"
+# maxClock = 120
+# fname = "input.txt"
 clksmiss = 0
 clkshit = 0
 # datas = [{} for i in range(maxClock)]
-mem, enc, regs = init(fname)
-cache = Cache()
+enc, regs = init(fname)
 alu = ALU()
 clock = 0
 offset = 0
@@ -81,23 +84,18 @@ byte = 0
 def clk():
     global clock, maxClock, clkshit, datas
     if clock < maxClock:
-        gav = {}
         if sys._getframe(1).f_code.co_name != 'readMem':
             clkshit += 1
         print("\nin clock:", clock, "executing: ", sys._getframe(1).f_code.co_name)
         for i in regs.keys():
-            gav[i] = regs[i].datasOfThisClk
+            datas[clock][i] = regs[i].datasOfThisClk
             regs[i].clk()
-        gav['cache'] = cache.datasOfThisClk
+        datas[clock]['cache'] = cache.datasOfThisClk
         cache.clk()
-        gav['Memory'] = mem.datasOfThisClk
+        datas[clock]['Memory'] = mem.datasOfThisClk
         mem.clk()
-        gav['ALU'] = alu.datasOfThisClk
+        datas[clock]['ALU'] = alu.datasOfThisClk
         alu.clk()
-        datas[clock] = gav
-        print(datas[clock])
-        print(datas[clock - 1])
-        print(datas[clock] == datas[clock - 1])
         clock += 1
 
 def readMem(addr):

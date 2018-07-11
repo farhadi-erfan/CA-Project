@@ -29,6 +29,7 @@ class Cache(Clockable):
     def clk(self):
         self.showData()
         if self.queries > 0:
+            self.datasOfThisClk = {}
             self.datasOfThisClk['hitRate until now'] = self.hits / self.queries
             self.datasOfThisClk['hits'] = self.hits
             self.datasOfThisClk['misses'] = self.queries - self.hits
@@ -95,5 +96,5 @@ class Cache(Clockable):
         for i in range(self.size):
             for j in range(self.way):
                 if not self.arr[i][j].isNone():
-                    out += [("index:", i, " way:", j, " addr:", self.arr[i][j].tag, " data:", self.arr[i][j].data)]
+                    out += ["index:" + str(i) + " way:" + str(j) + " addr:" + str(self.arr[i][j].tag) + " data:" + str(self.arr[i][j].data)]
         print("Cache summery:", out)

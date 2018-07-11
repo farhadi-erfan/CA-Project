@@ -20,6 +20,11 @@ class Memory(Clockable):
 
     def clk(self):
         self.showData()
+        r = self.datasOfThisClk["ready"]
+        rwn = self.datasOfThisClk["rwn"]
+        self.datasOfThisClk = {}
+        self.datasOfThisClk["rwn"] = rwn
+        self.datasOfThisClk["ready"] = r
         self.datasOfThisClk["reset"] = False
         self.datasOfThisClk["start"] = False
 
@@ -70,7 +75,7 @@ class Memory(Clockable):
         out = []
         for i in range(self.size):
             if self.arr[i] != 0:
-                out += [("index:", i, " data:", self.arr[i])]
+                out += ["index:" + str(i) + " data:" + str(self.arr[i])]
         print("Memory summery:", out)
 
     def showData(self):
