@@ -15,7 +15,24 @@ class Cache(Clockable):
         Clockable.__init__(self)
         self.size = size
         self.way = way
+        self.queries = 0
+        self.hits = 0
         self.arr = [[CacheCell() for i in range(way)] for i in range(size)]
+        self.datasOfThisClk['hitRate until now'] = 1
+        self.datasOfThisClk['hits'] = self.hits
+        self.datasOfThisClk['misses'] = self.queries - self.hits
+
+    def showData(self):
+        print('cache hitRate until now:', format(self.datasOfThisClk['hitRate until now'], '.2f'))
+        print('cache hits:', self.hits)
+
+    def clk(self):
+        self.showData()
+        if self.queries > 0:
+            self.datasOfThisClk['hitRate until now'] = self.hits / self.queries
+            self.datasOfThisClk['hits'] = self.hits
+            self.datasOfThisClk['misses'] = self.queries - self.hits
+
 
     def isIn(self, addr):
         out = False
@@ -31,7 +48,9 @@ class Cache(Clockable):
                 return self.arr[addr % self.size][i]
 
     def read(self, addr):
+        self.queries += 1
         if self.isIn(addr):
+            self.hits += 1
             cell = self.find(addr)
             cell.usage += 1
             return cell.data

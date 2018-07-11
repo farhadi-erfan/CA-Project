@@ -64,6 +64,10 @@ def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192):
 
 
 global fname, maxClock
+maxClock = 120
+fname = "input.txt"
+clksmiss = 0
+clkshit = 0
 datas = [{} for i in range(maxClock)]
 mem, enc, regs = init(fname)
 cache = Cache()
@@ -75,8 +79,10 @@ const = 0
 byte = 0
 
 def clk():
-    global clock, maxClock
+    global clock, maxClock, clkshit
     if clock < maxClock:
+        if sys._getframe(1).f_code.co_name != 'readMem':
+            clkshit += 1
         print("\nin clock:", clock, "executing: ", sys._getframe(1).f_code.co_name)
         for i in regs.keys():
             datas[clock][i] = regs[i].datasOfThisClk
@@ -90,21 +96,22 @@ def clk():
         clock += 1
 
 def readMem(addr):
+    global clksmiss
     delay = mem.delayDuration()
     data = mem.read(addr)
     for i in range(delay - 1):
         clk()
+        clksmiss += 1
     mem.datasOfThisClk["ready"] = True
     res = cache.write(addr, data)
-    clk()
     if res != None and res[0] == "write back":
         cell = res[1]
         delay = mem.delayDuration()
         mem.write(cell.tag, cell.data)
         for i in range(delay - 1):
             clk()
+            clksmiss += 1
         mem.datasOfThisClk["ready"] = True
-        clk()
     return data
 
 def fenito():
@@ -318,4 +325,7 @@ while clock < maxClock:
     mem.prArr()
     cache.prArr()
 fenito()
-print(mem.arr)
+print("Throughput:", clkshit)
+print("utilization:", format(clkshit / (clkshit + clksmiss), ".3f"))
+print("cache hitRate:", format(cache.datasOfThisClk['hitRate until now'], ".3f"))
+print('memory:\n', [hex(i)[2:] for i in mem.arr], end =', ')

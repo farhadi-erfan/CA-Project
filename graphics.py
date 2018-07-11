@@ -452,8 +452,9 @@ def emulate(win, dc):
     if win.filename == "":
         raise Exception("No file selected.")
     import runpy
-    a = runpy.run_module("Controller", {"fname": "input.txt", "maxClock": 60})
+    a = runpy.run_module("Controller", {"fname": "input.txt", "maxClock": 200})
     dc.data = a['datas']
+    # print(dc.data)
 
 def test():
     global A
@@ -478,7 +479,6 @@ def test():
     label = Label(win, textvariable=var)
     label.place(x=200, y=200)
     w.place(x=4, y=50)
-    win.photo = PhotoImage(file="forward.gif")
     clock_button = Button(win, text="next", fg="#a1dbcd", bg="#383a39")
     clock_button.place(x=270, y=450)
 
