@@ -95,5 +95,5 @@ class Cache(Clockable):
         for i in range(self.size):
             for j in range(self.way):
                 if not self.arr[i][j].isNone():
-                    out += [(i, j, self.arr[i][j].tag, self.arr[i][j].data)]
-        print(out)
+                    out += [("index:", i, " way:", j, " addr:", self.arr[i][j].tag, " data:", self.arr[i][j].data)]
+        print("Cache summery:", out)

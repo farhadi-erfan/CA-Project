@@ -64,8 +64,8 @@ def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192):
 
 
 global fname, maxClock
-maxClock = 120
-fname = "input.txt"
+# maxClock = 120
+# fname = "input.txt"
 clksmiss = 0
 clkshit = 0
 datas = [{} for i in range(maxClock)]
@@ -325,7 +325,12 @@ while clock < maxClock:
     mem.prArr()
     cache.prArr()
 fenito()
+print("-----------------final status-----------------")
 print("Throughput:", clkshit)
 print("utilization:", format(clkshit / (clkshit + clksmiss), ".3f"))
 print("cache hitRate:", format(cache.datasOfThisClk['hitRate until now'], ".3f"))
-print('memory:\n', [hex(i)[2:] for i in mem.arr], end =', ')
+s = ''
+for i in mem.arr:
+    s += hex(i)[2:] + ', '
+s = "[" + s[:len(s) - 2] + "]"
+print('memory:', s)

@@ -70,8 +70,8 @@ class Memory(Clockable):
         out = []
         for i in range(self.size):
             if self.arr[i] != 0:
-                out += [(i, self.arr[i])]
-        print(out)
+                out += [("index:", i, " data:", self.arr[i])]
+        print("Memory summery:", out)
 
     def showData(self):
         print("Memory", end = " ")
