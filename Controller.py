@@ -64,11 +64,11 @@ def init(fname, size = 256, pc = 0, lv = 64, sp = 128, cpp = 192):
 
 
 global fname, maxClock
-# maxClock = 120
-# fname = "input.txt"
+maxClock = 120
+fname = "input.txt"
 clksmiss = 0
 clkshit = 0
-datas = [{} for i in range(maxClock)]
+# datas = [{} for i in range(maxClock)]
 mem, enc, regs = init(fname)
 cache = Cache()
 alu = ALU()
@@ -79,20 +79,25 @@ const = 0
 byte = 0
 
 def clk():
-    global clock, maxClock, clkshit
+    global clock, maxClock, clkshit, datas
     if clock < maxClock:
+        gav = {}
         if sys._getframe(1).f_code.co_name != 'readMem':
             clkshit += 1
         print("\nin clock:", clock, "executing: ", sys._getframe(1).f_code.co_name)
         for i in regs.keys():
-            datas[clock][i] = regs[i].datasOfThisClk
+            gav[i] = regs[i].datasOfThisClk
             regs[i].clk()
-        datas[clock]['cache'] = cache.datasOfThisClk
+        gav['cache'] = cache.datasOfThisClk
         cache.clk()
-        datas[clock]['mem'] = mem.datasOfThisClk
+        gav['Memory'] = mem.datasOfThisClk
         mem.clk()
-        datas[clock]['ALU'] = alu.datasOfThisClk
+        gav['ALU'] = alu.datasOfThisClk
         alu.clk()
+        datas[clock] = gav
+        print(datas[clock])
+        print(datas[clock - 1])
+        print(datas[clock] == datas[clock - 1])
         clock += 1
 
 def readMem(addr):
@@ -334,3 +339,4 @@ for i in mem.arr:
     s += hex(i)[2:] + ', '
 s = "[" + s[:len(s) - 2] + "]"
 print('memory:', s)
+print(datas)

@@ -1,6 +1,3 @@
-# # from graphics import *
-# #
-# # print(dir(module))
-# import runpy
-# a = runpy.run_module("Controller", {"fname":"input.txt", "maxClock":60})
-# data = a['datas']
+kkkk = [{} for i in range(10)]
+kkkk[0] = {"sina" : 5}
+print(kkkk)

@@ -445,10 +445,10 @@ def openfile(win, b):
 class Data_container:
     def __init__(self):
         self.data = 0
+        self.counter = 0
 
 
 def emulate(win, dc):
-    global A
     if win.filename == "":
         raise Exception("No file selected.")
     import runpy
@@ -456,31 +456,94 @@ def emulate(win, dc):
     dc.data = a['datas']
     # print(dc.data)
 
+def next_func(dc, vars):
+    dc.counter += 1
+    print(dc.counter)
+    print(dc.data[dc.counter])
+    vars["AR"].set("AR:" + str(dc.data[dc.counter]["ar"]["val"]))
+    vars["AR-load"].set("AR-load:" + str(dc.data[dc.counter]["ar"]["load"]))
+    vars["AR-Inc"].set("AR-Inc:" + str(dc.data[dc.counter]["ar"]["inc"]))
+    vars["IR"].set("IR:" + str(dc.data[dc.counter]["ir"]["val"]))
+    vars["IR-load"].set("IR-load:" + str(dc.data[dc.counter]["ir"]["load"]))
+    vars["IR-Inc"].set("IR-inc:" + str(dc.data[dc.counter]["ir"]["inc"]))
+    vars["TR"].set("TR:" + str(dc.data[dc.counter]["tr"]["val"]))
+    vars["TR-load"].set("TR-load:" + str(dc.data[dc.counter]["tr"]["load"]))
+    vars["TR-inc"].set("TR-inc:" + str(dc.data[dc.counter]["tr"]["inc"]))
+    vars["DR"].set("DR:" + str(dc.data[dc.counter]["dr"]["val"]))
+    vars["DR-load"].set("DR-load:" + str(dc.data[dc.counter]["dr"]["load"]))
+    vars["DR-inc"].set("DR-inc:" + str(dc.data[dc.counter]["dr"]["inc"]))
+    vars["ACC"].set("ACC:" + str(dc.data[dc.counter]["acc"]["val"]))
+    vars["ACC-load"].set("ACC-load:" + str(dc.data[dc.counter]["acc"]["load"]))
+    vars["ACC-inc"].set("ACC-inc:" + str(dc.data[dc.counter]["acc"]["inc"]))
+    vars["SP"].set("SP:" + str(dc.data[dc.counter]["sp"]["val"]))
+    vars["SP-inc"].set("SP-inc:" + str(dc.data[dc.counter]["sp"]["inc"]))
+    vars["lv"].set("lv:" + str(dc.data[dc.counter]["lv"]["val"]))
+    vars["rwn"].set("rwn:" + str(dc.data[dc.counter]["Memory"]["rwn"]))
+    vars["ready"].set("ready:" + str(dc.data[dc.counter]["Memory"]["ready"]))
+    vars["start"].set("start:" + str(dc.data[dc.counter]["Memory"]["start"]))
+    vars["hit rate so far"].set("hit rate so far:" +
+                                str(dc.data[dc.counter]["cache"]["hitRate until now"]))
+    vars["PC"].set("PC:" + str(dc.data[dc.counter]["pc"]["val"]))
+    vars["PC-load"].set("PC-load:" + str(dc.data[dc.counter]["pc"]["load"]))
+    vars["PC-inc"].set("PC-inc:" + str(dc.data[dc.counter]["pc"]["inc"]))
 def test():
-    global A
+    string = """Select code file to emulate.
+        values of registers and signals are shown below.
+        final values and memory data are reported in a text file at last."""
     win = GraphWin()
     dc = Data_container()
     win.setCoords(0, 0, 10, 10)
     b_emulate = Button(win, text="emulate", command=lambda: emulate(win, dc)
-                       ,fg = "#a1dbcd", bg="#383a39", state="disabled")
+                       ,fg="#a1dbcd", bg="#383a39", state="disabled")
     b_emulate.place(x=350, y=450)
     b_open = Button(win, text="open file", command=lambda: openfile(win, b_emulate)
-    ,fg = "#a1dbcd", bg = "#383a39")
+    ,fg="#a1dbcd", bg="#383a39")
     b_open.place(x=450, y=450)
-    var = StringVar()
-    zin = 0
-    str = """Select code file to emulate.
-        values of registers and signals are shown below.
-        final values and memory data are reported in a text file at last."""
-    w = Label(win, text=str, fg="green", font=("Helvetica", 14),
+    vars = {}
+    vars["AR"] = StringVar()
+    vars["AR-load"] = StringVar()
+    vars["AR-Inc"] = StringVar()
+    vars["IR"] = StringVar()
+    vars["IR-load"] = StringVar()
+    vars["IR-Inc"] = StringVar()
+    vars["TR"] = StringVar()
+    vars["TR-load"] = StringVar()
+    vars["TR-inc"] = StringVar()
+    vars["DR"] = StringVar()
+    vars["DR-load"] = StringVar()
+    vars["DR-inc"] = StringVar()
+    vars["ACC"] = StringVar()
+    vars["ACC-load"] = StringVar()
+    vars["ACC-inc"] = StringVar()
+    vars["SP"] = StringVar()
+    vars["SP-inc"] = StringVar()
+    vars["lv"] = StringVar()
+    vars["rwn"] = StringVar()
+    vars["ready"] = StringVar()
+    vars["start"] = StringVar()
+    vars["hit rate so far"] = StringVar()
+    vars["PC"] = StringVar()
+    vars["PC-load"] = StringVar()
+    vars["PC-inc"] = StringVar()
+    labels = {}
+    myx = 10
+    myy = 200
+    for name in vars.keys():
+        vars[name].set(name + ":" + str(0))
+        labels[name] = Label(win, textvariable=vars[name])
+        labels[name].place(x=myx, y=myy)
+        myx += 120
+        if myx > 450:
+            myy += 20
+            myx = 10
+
+    w = Label(win, text=string, fg="green", font=("Helvetica", 14),
               justify=CENTER, wraplength=0, highlightthickness=2,
               highlightbackground="black")
-    var.set("salam:" + zin.__str__())
-    label = Label(win, textvariable=var)
-    label.place(x=200, y=200)
     w.place(x=4, y=50)
     clock_button = Button(win, text="next", fg="#a1dbcd", bg="#383a39")
     clock_button.place(x=270, y=450)
+    clock_button.configure(command=lambda: next_func(dc, vars))
 
     win.getMouse()
 
